@@ -1,0 +1,20 @@
+{% extends "pizzas/base.html" %}
+
+{% block content %}
+
+<h1 style="text-align:center;">Pizza: {{ pizza }}</h1>
+<h2 style="text-align:center;">Toppings</h2>
+
+<ul>
+  {% for topping in toppings %}
+  <!--Each bullet lists 2 pieces of info: timestamp and text.-->
+  <li>
+    <!--linebreaks filter let browsers distinguish new lines.-->
+    <p>{{ topping.name|linebreaks }}</p>
+  </li>
+  {% empty %} <!--If no items in the list.-->
+  <li>There are no topping for this pizza yet.</li>
+  {% endfor %} <!--Use explicit tag to indicate the end of a loop.-->
+</ul>
+
+{% endblock content %}

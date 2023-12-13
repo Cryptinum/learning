@@ -1,0 +1,38 @@
+1. Planning for the project
+
+	Always trying to prepare a plan before making a relatively large project.
+
+	In the project 'Alien Invasion', we are aiming to implement these functions:
+
+	Control:
+	 - Controlling a rocket ship that appears at the bottom-center of the screen.
+	 - Player can move the ship LEFT and RIGHT using the arrow keys.
+	 - Player can press space bar to let the ship shoot bullet.
+	
+	Game start:
+	 - A fleet of aliens fill the sky and moves across and down the screen.
+	 - Players must shoot and destroy the aliens.
+	 - If the player shoot all the aliens, a new fleet of aliens appears and move faster.
+
+	Game ending:
+	 - If any alien hits the player's ship or reach the bottom of the screen,
+	   player will lose a ship.
+	 - After losing 3 ships, the game ends.
+
+2. Splitting the project into small pieces
+
+	Rocket ship system - shooting bullets
+	Alien system - alien generation and renew
+	Scoring system - counting and calculating
+
+3. Rocket ship system
+
+	The rocket will be fixed at the bottom of the screen.
+	Rocket can move left or right by pressing arrow key.
+	Rocket should be restricted in the screen.
+	Rocket can shoot fixed amount of bullets at the same time by pressing space bar.
+	Bullets should disappear after moving out of the screen.
+
+4. Alien system
+
+	

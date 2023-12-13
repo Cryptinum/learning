@@ -1,0 +1,7 @@
+In Python, you can:
+   Show neatly formatted strings.
+   Use commands to do some mathematical operations.
+   Manage informations in lists, tuples and dictionaries.
+   Use if condition to judge the authenticity of a statement.
+   Use functions and classes to make our code tidier.
+   Read and write files.

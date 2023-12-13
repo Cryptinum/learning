@@ -1,0 +1,5 @@
+
+
+q
+& "C:/Program Files/Microsoft Visual Studio/Shared/Python39_64/python.exe" d:/Projects/PyLearning/Exercise/Basic_of_Python/013_while_loop.py
+123

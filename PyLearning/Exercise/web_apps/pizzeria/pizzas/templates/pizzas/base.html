@@ -1,0 +1,8 @@
+<p>
+  <a href="{% url 'pizzas:index' %}">Main Page</a> |
+  <a href="{% url 'pizzas:pizzas' %}">Pizzas</a>
+  <br>
+</p>
+
+<!--Use placeholder to let child template define information.-->
+{% block content %}{% endblock content %}

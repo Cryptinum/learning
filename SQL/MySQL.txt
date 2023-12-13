@@ -1,0 +1,1212 @@
+##############第1-3章##############
+
+    一、下载MySQL并连接
+    **打开MySQL Shell输入:\c 用户名@主机名
+    **一般为: \c root@localhost:3306
+
+    \c 连接至数据库
+    \disconnect 断开连接
+    \q 退出Shell
+    \? 获取帮助
+    help <语句>; 获取特定语句的帮助
+
+    **如用cmd连接，则输入:mysql -u <用户名> -p -h <主机名> -P <端口号>
+    **一般为: mysql -u root -p
+    然后输入密码即可连接至数据库
+
+    二、USE(指定)
+    在一个连接中可能有多个数据库，以我们连接的为例，有mysql、sakila、world三个数据库
+
+    **获取数据库列表: SHOW DATABASES;
+    **使用特定数据库: USE <数据库名>;
+    如: USE world; 即可切换到world数据库，命令行提示Database changed
+
+    **获取数据库中的数据表列表: USE <数据库名>; SHOW TABLES;
+    **获取特定数据表里面的信息: SHOW COLUMNS FROM <数据表名>;
+    ****另一种等价形式: DESCRIBE <数据表名>;
+    如输入SHOW COLUMNS FROM city; 该输出为
+    +-------------+----------+------+-----+---------+----------------+
+    | Field       | Type     | Null | Key | Default | Extra          |
+    +-------------+----------+------+-----+---------+----------------+
+    | ID          | int      | NO   | PRI | NULL    | auto_increment | (自动增加、主键)
+    | Name        | char(35) | NO   |     |         |                |
+    | CountryCode | char(3)  | NO   | MUL |         |                | (可重复)
+    | District    | char(20) | NO   |     |         |                |
+    | Population  | int      | NO   |     | 0       |                | (默认为0)
+    +-------------+----------+------+-----+---------+----------------+
+    显示了数据表的字段名、数据类型、是否为NULL、键信息、默认值、其他信息。
+
+    >===================语句整理==================<
+    USE <数据库名>;			使用特定数据库
+    SHOW DATABASES;			获取数据库列表
+    SHOW TABLES;			获取数据表列表
+    SHOW COLUMNS FROM <数据表名>;	获取数据表描述
+    DESCRIBE <数据表名>;		获取数据表描述
+    SHOW STATUS;			获取服务器状态信息
+    SHOW CREATE DATABASE/TABLE;	显示创建数据库/数据表的语句
+    SHOW GRANTS;			显示授予用户的安全权限
+    SHOW ERRORS/WARNINGS;		显示服务器错误或警告信息
+    >=============================================<
+
+##############第4-5章############## ~选择与排序~
+
+    一、SELECT(选择)
+    **获取数据表中的一个列: SELECT <列名> FROM <数据表名>;
+    **获取数据表中的多个列: SELECT <列名1,列名2,...,列名n> FROM <数据表名>;
+    **获取数据表中的所有列: SELECT * FROM <数据表名>;
+
+    **用[DISTINCT]关键字筛选不重复值: SELECT DISTINCT <列名> FROM <数据表名>;
+
+    **用[LIMIT]关键字指定返回的行:
+    ****指定表开始的前几行: <列名> FROM <数据表名> LIMIT <最大行数>;
+    ****指定某行开始的几行: <列名> FROM <数据表名> LIMIT <起始行数,索引行数>; (从0开始)
+    ****指定某行开始的几行: <列名> FROM <数据表名> LIMIT <索引行数> OFFSET <起始行数>; (从0开始)
+
+    二、ORDER BY(排序)
+    **单列排序: SELECT <> FROM <> ORDER BY <列名>;
+    **多列排序: SELECT <> FROM <> ORDER BY <多列>; (按列名先后顺序)
+    **降序排序: SELECT <> FROM <> ORDER BY <列名> DESC; (支持多列排序)
+    **升序排序: 关键字为ASC，但因为默认升序因此用处不大
+
+    例1: 选择多列且进行排序、其中prod_price降序排序
+    SELECT prod_id, prod_price, prod_name
+    FROM products
+    ORDER BY prod_price DESC, prod_name;
+
+    例2: 实战应用——结合ORDER BY和LIMIT寻找极值
+    [语法]: SELECT <> FROM <> ORDER BY <> DESC LIMIT 1;
+    [解析]: 其中DESC保证了从大到小检索，而LIMIT 1使MySQL仅返回第一行。
+    [注意]: ORDER BY子句应严格置于FROM子句之后、LIMIT子句之前
+
+##############第6-7章############## ~基础过滤~
+
+    一、WHERE(搜索条件)
+    **搜索条件: {SELECT FROM} WHERE <条件>;
+
+    >=========可以使用的条件=========<
+    = 等于
+    <>,!= 不等于
+    <,<= 小于(等于)
+    >,>= 大于(等于)
+    BETWEEN <X> AND <Y> 在指定的两个值XY中间
+    IS NULL 空值
+    >================================<
+    [注意]: 若不使用IS NULL，则WHERE在筛选非值时并不会选择出含NULL的行
+
+    例1: 筛选特定数值的行
+    SELECT prod_name, prod_price
+    FROM products
+    WHERE prod_price = 2.50;
+
+    例2: 筛选特定键值的行
+    SELECT prod_name, prod_price
+    FROM products
+    WHERE prod_name = 'fuses';
+    [注意]: 字符串值条件应置于引号内
+
+    例3: 筛选特定范围的行
+    SELECT prod_name, prod_price
+    FROM products
+    WHERE prod_price BETWEEN 5 AND 10;
+
+    例4: 结合ORDER BY与WHERE
+    SELECT prod_name, prod_price
+    FROM products
+    WHERE prod_price <= 10
+    ORDER BY prod_price DESC;
+    [注意]: WHERE子句应严格置于ORDER BY子句之前
+
+    二、用操作符连接多个条件
+    >=========可以使用的操作符=========<
+    AND 与
+    OR 或
+    IN 包含于
+    NOT 非
+    LIKE 通配
+    >==================================<
+
+    例1: 结合AND与OR
+    SELECT prod_name, prod_price
+    FROM products
+    WHERE (vend_id = 1002 OR vend_id = 1003) AND prod_price >= 10;
+    [注意]: 由于AND优先级高于OR，因此需要适当使用'()'以指定运算顺序
+
+    例2: 用IN降低条件复杂度
+    SELECT prod_name, prod_price
+    FROM products
+    WHERE vend_id IN (1002, 1003)
+    ORDER BY prod_name;
+    [注意]:vend_id IN (1002, 1003) 与 vend_id = 1002 OR vend_id = 1003 等价
+
+    例3: NOT IN语句
+    SELECT prod_name, prod_price
+    FROM products
+    WHERE vend_id NOT IN (1002, 1003)
+    ORDER BY prod_name;
+
+##############第8-9章############## ~通配与正则表达式~
+    (更多内容详见《正则表达式必知必会》)
+
+    一、LIKE
+    **搜索是否包含特定字符串格式: {SELECT FROM} WHERE <列名> LIKE <格式>;
+    **格式由引号括起，通配有'%','_'两种，'%'用于匹配多个字符，'_'用于匹配单个字符
+    [注意]: 通配搜索应尽量放在WHERE语句靠后的部分以减少搜索时间
+    [注意]: 两种通配符均无法匹配NULL
+
+    二、REGEXP(正则表达式、Regular Expression)
+    **语法: {SELECT FROM} WHERE <列名> REGEXP <正则表达式> ORDER BY <列名>;
+
+    >==============通配方法==============<
+    '.' 代表一个字符，例如'.000'可以匹配含'1000','a000'
+    '|' 逻辑或，例如'1000|2000|3000'，与'[123]000'效果一致
+    '^' 逻辑非，例如[^123]可以匹配不含1,2,3的字符串
+    '[字符串]' 匹配特定的一组字符，例如'[123] Ton'可以匹配'1 Ton','2 Ton','3 Ton'
+    '[范围1-范围2]' 为[范围1...范围2]的简化，例如[1-5],[a-r]均合法
+    '\\<特殊字符>' MySQL使用两个反斜杠'\\'作为前导匹配特殊字符，如'\\-'为匹配'-'
+    >==================================<
+
+    [注意]: 可以看出LIKE '%_000%'和REGEXP '.000'的效果是一致的，如:
+        mysql> SELECT prod_name
+            -> FROM products
+            -> WHERE prod_name LIKE '%_000'
+            -> ORDER BY prod_name;
+        mysql> SELECT prod_name
+            -> FROM products
+            -> WHERE prod_name REGEXP '.000'
+            -> ORDER BY prod_name;
+        效果一致
+    [注意]: MySQL中的正则表达式匹配不区分大小写，若希望区分则使用REGEXP BINARY <正则表达式>
+    [注释]: \\f 换页、\\n 换行、\\r 回车、\\t 制表符、\\v 纵向制表、\\\ 反斜杠
+
+    >==============字符类==============<
+    [:digit:] 任意数字（同[0-9]）
+    [:lower:] 任意小写字母（同[a-z]）
+    [:upper:] 任意大写字母（同[A-Z]）
+    [:alpha:] 任意字符（同[a-zA-Z]）
+    [:alnum:] 任意字母和数字（同[a-zA-Z0-9]）
+    [:print:] 任意可打印字符
+    [:graph:] 与[:print:]相同，但不包括空格
+    [:blank:] 空格和制表（同[\\t]）
+    [:cntrl:] ASCII控制字符（ASCII 0到31和127）
+    [:punct:] 既不在[:alnum:]又不在[:cntrl:]中的任意字符
+    [:space:] 包括空格在内的任意空白字符（同[\\f\\n\\r\\t\\v]）
+    [:xdigit:] 任意十六进制数字（同[a-fA-F0-9]）
+    >==================================<
+
+    >==============元字符==============<
+    * 0个或多个匹配
+    + 1个或多个匹配（等于{1,}）
+    ? 0个或1个匹配（等于{0,1}）
+    {n} 指定数目的匹配
+    {n,} 不少于指定数目的匹配
+    {n,m} 匹配数目的范围（m不超过255）
+    >==================================<
+
+    例1: 匹配可变字符串
+    SELECT prod_name
+    FROM products
+    WHERE prod_name REGEXP '\\([0-9] sticks?\\)'
+    ORDER BY prod_name;
+    [解析]: s后面跟随的?使得可以同时匹配stick和sticks，\\(和\\)匹配圆括号
+
+    例2: 匹配至少三位数字
+    SELECT prod_name AS SHIT
+    FROM products
+    WHERE prod_name REGEXP '[0-9]{3}'
+    ORDER BY prod_name;
+    [解析]: {3}要求前面的字符出现三次，而前面的字符由[0-9]定义，即数字
+    [注意]: 这可能会匹配到含四位数字或以上的数字
+
+    >==============定位符==============<
+    ^ 文本的开始
+    $ 文本的结尾
+    \\b 词的开始和结尾 (From MySQL 8)
+    [[:<:]],[[:>:]] 词的开始和结尾 (To MySQL 7)
+    >==================================<
+
+    例3: 搜索所有以数字和小数点开始的字符串
+    SELECT prod_name
+    FROM products
+    WHERE prod_name REGEXP '^[0-9\\.]'
+    ORDER BY prod_name;
+    [解析]: ^使得仅匹配以数字和小数点开始的字符串
+    [注意]: 由前述，^有两种用法，用在[]中则表示逻辑非
+
+    例4: 搜索所有含以s开始的词的字符串
+    SELECT prod_name
+    FROM products
+    WHERE prod_name REGEXP 'l\\b'
+    ORDER BY prod_name;
+    [注意]: 若结尾则使用's\\b'
+    [输出]: 所有结果都含有以s开头的词，不分大小写
+    +----------------+
+    | prod_name      |
+    +----------------+
+    | Bird seed      |
+    | Safe           |
+    | Sling          |
+    | TNT (1 stick)  |
+    | TNT (5 sticks) |
+    +----------------+
+
+##############第10-11章############## ~函数与数据处理~
+    [动机]: 数据表中存储的数据可能不是实际应用中需要的格式，例如总价不存储在表内但数量和单价有
+    [操作]: 格式化数据表中的数据、计算或转换某些数据，这在SELECT中实现
+    [注意]: 字段(field)与列(column)的意义实际上一致
+    [链接]: 函数列表https://dev.mysql.com/doc/refman/8.0/en/functions.html
+
+    〇、AS
+    [语法]: SELECT <数据> AS <指定名> {FROM} {ORDER BY}
+    [解析]: 为SELECT的数据指定一个新名称，其中每个SELECT的数据都可添加AS子句
+
+    一、文本处理函数
+        1. CONCAT()函数——连接字段
+        [语法]: SELECT CONCAT('字段1','字段2',...,'字段n') {AS} {FROM};
+        [注意]: CONCAT()中的字段可以是<列名>，此时不应使用引号
+        [注意]: AS子句可省略，此子句用于给CONCAT()的新字段指定一个名称
+
+        例1: 用'vend_name (vend_country)'进行格式化输出
+        SELECT CONCAT(vend_name, ' (', vend_country, ')') AS vend_title
+        FROM vendors
+        ORDER BY vend_name;
+
+        2. LTRIM(), RTRIM(), TRIM()——从左侧、右侧、两侧去除字段中的空格
+        3. UPPER(), LOWER()——大小写切换
+        4. LEFT(), RIGHT()——返回串最左(右)侧字符
+        5. LENGTH()——返回串的长度
+        6. LOCATE()——寻找串中的子串
+
+        7. SOUNDEX()——返回字符串的soundex值
+
+        例2: 用SOUNDEX()模糊搜索
+        SELECT cust_name, cust_contact
+        FROM customers
+        WHERE SOUNDEX(cust_contact) = SOUNDEX('jarry mause');
+        [输出]:
+        +-------------+--------------+
+        | cust_name   | cust_contact |
+        +-------------+--------------+
+        | Mouse House | Jerry Mouse  |
+        +-------------+--------------+
+
+    二、时间处理函数
+        CurDate() 返回当前日期
+        CurTime() 返回当前时间
+        Date_Format() 返回一个格式化的日期或时间串
+
+        Year() 返回一个日期的年份部分
+        Month() 返回一个日期的月份部分
+        Day() 返回一个日期的天数部分
+        DayOfWeek() 对于一个日期，返回对应的星期几
+
+        Now() 返回当前日期和时间
+        Date() 返回日期时间的日期部分
+        Time() 返回日期时间的时间部分
+
+        Hour() 返回一个时间的小时部分
+        Minute() 返回一个时间的分钟部分
+        Second() 返回一个时间的秒部分
+        
+        AddDate() 增加一个日期（天、周等）
+        AddTime() 增加一个时间（时、分等）
+        DateDiff() 计算两个日期之差
+        Date_Add() 高度灵活的日期运算函数
+
+        例3: 返回某日期后的订单
+        SELECT cust_id, order_num
+        FROM orders
+        WHERE DATE(order_date) >= '2005-09-30';
+        [解析]: 日期的默认格式为'yyyy-mm-dd'
+        [注意]: 此处使用DATE()保证检索不会受到时间的干扰
+
+    三、数值处理函数
+        1. 算术计算
+        [语法]: SELECT <四则运算> {FROM};
+        [注意]: 四则运算的对象可以是指定的数字或<列名>，四则运算支持+,-,*,/,()
+
+        例3: 通过四则运算计算购入商品的总价，订单号为20005
+        SELECT prod_id,
+            quantity,
+            item_price,
+            quantity * item_price AS total_price
+        FROM orderitems
+        WHERE order_num = 20005;
+        [注意]: 多个SELECT中换行时不要忘记逗号
+
+        2. 数学函数
+        Abs() 返回一个数的绝对值
+        Cos() 返回一个角度的余弦
+        Exp() 返回一个数的指数值
+        Mod() 返回除操作的余数
+        Pi() 返回圆周率
+        Rand() 返回一个随机数
+        Sin() 返回一个角度的正弦
+        Sqrt() 返回一个数的平方根
+        Tan() 返回一个角度的正切
+
+##############第12-14章############## ~聚集、分组与子查询~
+    [动机]: 汇总而不检索，或进行一些简单统计
+
+    一、聚集函数
+    [链接]: https://dev.mysql.com/doc/refman/8.0/en/aggregate-functions.html
+    AVG() 返回某列的平均值，仅单参数
+    COUNT() 返回某列的行数，参数为*(包括NULL)或<列名>(不包括NULL)
+    MAX() 返回某列的最大值，忽略NULL
+    MIN() 返回某列的最小值，忽略NULL
+    SUM() 返回某列值之和，忽略NULL
+
+    例1: 计算某订单中的合计价格
+    SELECT SUM(item_price * quantity) AS total_price
+    FROM orderitems
+    WHERE order_num = 20005;
+    [解析]: 选择订单号20005，求单价*数量在订单20005中的总和
+
+    二、DISTINCT/ALL
+    在使用以上五个聚集函数时，MySQL默认使用ALL修饰函数中的<列名>
+    使用DISTINCT则会仅考虑不同的值
+    [注意]: DISTINCT关键字只能在聚集函数中作用，单独使用则不起作用
+    [注意]: COUNT(DISTINCT)禁止使用，用于MIN()、MAX()无意义，因此实际只能用于AVG()、SUM()
+
+    例2: 仅考虑供应商1003提供的不同价格产品的平均价格
+    SELECT AVG(DISTINCT prod_price) AS avg_price
+    FROM products
+    WHERE vend_id = 1003;
+    [解析]: 应与以下代码进行比较
+    SELECT AVG(prod_price) AS avg_price
+    FROM products
+    WHERE vend_id = 1003;
+
+    例3: 使用多个聚集函数
+    SELECT COUNT(*) AS num_items,
+           MIN(prod_price) AS price_min,
+           MAX(prod_price) AS price_max,
+           AVG(prod_price) AS price_avg
+    FROM products;
+
+    四、GROUP BY——分组聚集
+    [语法]: {SELECT} {FROM} GROUP BY <列名> (WITH ROLLUP);
+    [注意]: GROUP BY必须严格放置于WHERE子句之后、ORDER BY子句之前
+
+    [注意]: 实际就是把WHERE子句替换为GROUP BY并不给定查询的值
+    [注意]: 使用WITH ROLLUP关键字可以也显示整个分组级别对应的值
+    [注意]: NULL被视为一个分组
+
+    例4: 分组计算不同订单的总价
+    SELECT order_num, SUM(item_price * quantity) AS total_price
+    FROM orderitems
+    GROUP BY order_num;
+
+    五、HAVING——分组过滤
+    [语法]: {SELECT} {FROM} {GROUP BY} HAVING <条件>;
+
+    [注意]: HAVING与WHERE类似，实际上条件格式一致，只是区别在于前者过滤分组、后者过滤行
+
+    例5: 分组计算不同订单的总价，其中需要总价大于50，单价大于2，按总价降序，输出前3行
+    SELECT order_num, SUM(item_price * quantity) AS total_price
+    FROM orderitems
+    WHERE item_price >= 2
+    GROUP BY order_num
+    HAVING total_price >= 50
+    ORDER BY total_price DESC
+    LIMIT 3;
+    [解析]: WHERE和HAVING在分组先后确定了列值的筛选和分组后值的筛选
+    [注意]: HAVING中条件的参数可以用AS给定的名称替代，ORDER BY给出了最终的排序方式
+    [注意]: 以上的七个子句也是目前所有主要子句的固定顺序
+
+    六、子查询
+
+    例6: 嵌套查询
+    目前我们操作crashcourse中的三个表customers, orderitems, orders，其中：
+    orderitems中存储了订单中的商品、订单号
+    orders中存储了订单号、客户代码
+    customers中存储了客户代码、客户信息。
+    *我们希望列出订购TNT2的所有客户
+    [代码]: 顺序查询
+        SELECT order_num
+        FROM orderitems
+        WHERE prod_id = 'TNT2'; -- 检索orderitem中所有含TNT2的订单，输出20005,20007
+        SELECT cust_id
+        FROM orders
+        WHERE order_num IN (20005, 20007); -- 检索输出的订单号对应的客户代码，输出10001,10004
+        SELECT cust_name, cust_contact
+        FROM customers
+        WHERE cust_id IN (10001, 10004) -- 检索输出的客户代码对应的客户信息
+    [代码]: 子查询
+        SELECT cust_name, cust_contact
+        FROM customers
+        WHERE cust_id IN (
+            SELECT cust_id
+            FROM orders
+            WHERE order_num IN (
+                SELECT order_num
+                FROM orderitems
+                WHERE prod_id = 'TNT2'
+            )
+        );
+    [注意]: 子查询语句中不加分号，WHERE子句及其中的子查询需要有相同的<列名>
+
+    例7: 计算字段
+    目前我们操作crashcourse中的三个表customers, orderitems, orders，其中：
+    orderitems中存储了订单中的商品、订单号
+    orders中存储了订单号、客户代码
+    customers中存储了客户代码、客户信息。
+    *我们希望列出每个客户的订单总数
+    [代码]: 子查询
+    SELECT cust_name, cust_address,
+       (SELECT COUNT(*)
+        FROM orders
+        WHERE orders.cust_id = customers.cust_id) AS orders -- 一个计算字段
+    FROM customers
+    ORDER BY cust_name;
+    [注意]: 此处使用的子查询称为相关子查询，这是因为cust_id的多义性
+
+##############第15-16章############## ~联结~
+    数据库涉及应尽量避免相同数据的多次出现，因此需要用到联结关系来结构化数据库
+    独立的数据种类应自然地分在不同的数据表中存储，例如在crashcourse中
+    vendors仅存储供应商的信息，其中vend_id以供应商的代码标识作为该表的主键
+    而products仅存储产品信息、除了供应商id外无其他信息，其中vend_id也作为该表的外键，关联两表
+
+    [定义]: 外键(foreign key)是该表中作为存储另外某表的主键(primary key)的某一列
+    [意义]: 仅存储标识，而具体信息变动时可以只修改一次，保证了较好的可伸缩性(scale)
+
+    一、联结
+    [等值联结]: {SELECT} FROM <数据表名1,数据表名2,...> WHERE <条件>;
+    [内部联结]: {SELECT} FROM <数据表名1> INNER JOIN <数据表名2> ON <条件>;
+    [注意]: 也就是在FROM中添加多个<数据表名>作为参数
+    [注意]: WHERE和ON使用的条件格式相同
+
+    例1: 联结两个表的信息
+    [代码]: 等值联结
+    SELECT vend_name, prod_name, prod_price
+    FROM vendors, products
+    WHERE vendors.vend_id = products.vend_id
+    ORDER BY vend_name, prod_name;
+    [代码]: 内部联结
+    SELECT vend_name, prod_name, prod_price
+    FROM vendors INNER JOIN products ON vendors.vend_id = products.vend_id
+    ORDER BY vend_name, prod_name;
+    [解析]: WHERE使得主键和外键进行匹配以保证不会重复输出，若无此子句则输出直积
+    [注意]: 内部联结作为一种确定的语法使得更不容易忘记加入条件，因此使用的更多
+
+    例2: 联结多个表的信息
+    SELECT prod_name, vend_name, prod_price, quantity
+    FROM orderitems AS o, products AS p, vendors AS v
+    WHERE p.vend_id = v.vend_id
+      AND o.prod_id = p.prod_id
+      AND order_num = 20005;
+    [解析]: 输出订单号20005中的商品名、供应商名、单价和数量
+    [注意]: 使用AS分配的别名也可以在WHERE子句的条件中调用
+
+    例3: 第12-14章例6用子查询进行了包含TNT2的订单的顾客列表检索
+    [代码]: 子查询
+        SELECT cust_name, cust_contact
+        FROM customers
+        WHERE cust_id IN (
+            SELECT cust_id
+            FROM orders
+            WHERE order_num IN (
+                SELECT order_num
+                FROM orderitems
+                WHERE prod_id = 'TNT2'
+            )
+        );
+    [代码]: 联结
+        SELECT cust_name, cust_contact
+        FROM customers AS c, orders AS o, orderitems AS oi
+        WHERE c.cust_id = o.cust_id  -- 联结1
+          AND oi.order_num = o.order_num  -- 联结2
+          AND prod_id = 'TNT2';  -- 过滤TNT2
+    [解析]: 将三个条件整合在一个WHERE子句中以优化代码，同时使用简化的别名
+
+    二、高级联结
+    例4: 自联结
+    [代码]: 子查询
+    SELECT prod_id, prod_name
+    FROM products
+    WHERE vend_id = (SELECT vend_id
+                     FROM products
+                     WHERE prod_id = 'DTNTR');
+    [代码]: 自联结
+    SELECT p1.prod_id, p1.prod_name
+    FROM products AS p1, products AS p2
+    WHERE p1.vend_id = p2.vend_id
+      AND p2.prod_id = 'DTNTR';
+    [解析]: 查询所有供应DTNTR的公司的所有商品，使用全名避免二义性
+
+    例5: 自然联结
+    SELECT c.*, o.order_num, o.order_date, oi.prod_id, oi.quantity, oi.item_price
+    FROM customers AS c, orders AS o, orderitems AS oi
+    WHERE c.cust_id = o.cust_id
+      AND oi.order_num = o.order_num
+      AND prod_id = 'FB';
+    [解析]: 自然联结使得列不会被重复列出
+
+    例6: 外部联结
+    SELECT customers.cust_id, orders.order_num
+    FROM customers INNER JOIN orders ON customers.cust_id = orders.cust_id;
+    SELECT customers.cust_id, orders.order_num
+    FROM customers LEFT OUTER JOIN orders ON customers.cust_id = orders.cust_id;
+    SELECT customers.cust_id, orders.order_num
+    FROM customers RIGHT OUTER JOIN orders ON customers.cust_id = orders.cust_id;
+    [解析]: LEFT和RIGHT指定联结的的主表，检索结果将选择主表指定列的所有行
+
+    三、使用聚集函数的联结
+    例7: 函数可以在联结中使用
+    SELECT customers.cust_name,
+           customers.cust_id,
+           COUNT(orders.order_num) AS num_ord
+    FROM customers LEFT OUTER JOIN orders
+      ON customers.cust_id = orders.cust_id
+    GROUP BY customers.cust_id;
+    [解析]: 通过外部联结可以列出所有顾客名称、id，以及对应的订单数
+
+##############第17章############## ~组合查询~
+    [动机]: 将多个SELECT查询汇总成一个表
+
+    一、UNION——组合查询
+    [格式]: {SELECT FROM} UNION {SELECT FROM} UNION ...;
+    [注意]: UNION必须至少有两个SELECT语句，每个查询有相同的列、表达式或聚集函数，数据类型兼容
+    [注意]: UNION ALL可以输出查询中重复的行
+
+    例1: 组合两个SELECT查询
+    SELECT vend_id, prod_id, prod_price
+    FROM products
+    WHERE prod_price <= 5
+    UNION
+    SELECT vend_id, prod_id, prod_price
+    FROM products
+    WHERE vend_id IN (1001,1002)
+    ORDER BY vend_id;
+    [注意]: UNION可以自动组合相同的行，ORDER BY作用于UNION组合之后的列表
+    SELECT vend_id, prod_id, prod_price
+    FROM products
+    WHERE prod_price <= 5 OR vend_id IN (1001,1002)
+    ORDER BY vend_id;
+    [解析]: 显然直接用WHERE进行多个条件判断更简单，但如果希望输出重复行仍需使用UNION ALL
+
+##############第18章############## ~全文本搜索~
+    [注意]: crashcourse中productnotes表使用的是MyISAM引擎，其他则是InnoDB
+    [注意]: MyISAM支持全文本搜索，而InnoDB不支持，在创建表时需要注意
+    [注意]: MySQL包含一个内建的stopword列表，在需要时可以覆盖，具体参阅文档
+
+    # 表productnotes的创建代码，其中FULLTEXT(note_text)提供了note_text列的全文本搜索支持
+    CREATE TABLE productnotes
+    (
+    note_id    int           NOT NULL AUTO_INCREMENT,
+    prod_id    char(10)      NOT NULL,
+    note_date datetime       NOT NULL,
+    note_text  text          NULL ,
+    PRIMARY KEY(note_id),
+    FULLTEXT(note_text)  -- 也可以是多个列
+    ) ENGINE=MyISAM;
+
+    一、全文本搜索
+    [格式]: {SELECT} {FROM} WHERE MATCH(<列名>) AGAINST('搜索表达式');
+    [注意]: MATCH中的值必须与FULLTEXT中的值完全一致，包括顺序
+    [注意]: 全文本搜索忽略那些词长度<=3的词、忽略单引号、忽略出现50%以上的结果
+
+    例1: 筛选所有含complaint的注释
+    SELECT prod_name, note_text
+    FROM products AS p, productnotes AS n
+    WHERE p.prod_id = n.prod_id
+      AND MATCH(note_text) AGAINST('complaint')
+    ORDER BY n.prod_id;
+
+    二、查询扩展
+    [格式]: {SELECT} {FROM} WHERE MATCH(<列名>) AGAINST('搜索表达式' WITH QUERY EXPANSION);
+    [注释]: 即在AGAINST表达式中附加WITH QUERY EXPANSION后缀    
+
+    例2: 
+    SELECT prod_name, note_text
+    FROM products AS p, productnotes AS n
+    WHERE p.prod_id = n.prod_id
+      AND MATCH(note_text) AGAINST('anvils' WITH QUERY EXPANSION)
+    ORDER BY n.prod_id;
+
+    三、布尔文本搜索
+    [格式]: {SELECT} {FROM} WHERE MATCH(<列名>) AGAINST('搜索表达式' IN BOOLEAN MODE);
+
+    >=========布尔运算符=========<
+    + 包含，词必须存在
+    - 排除，词必须不出现
+    > 包含，而且增加等级值
+    < 包含，且减少等级值
+    () 把词组成子表达式（允许这些子表达式作为一个组被包含、排除、排列等）
+    ~ 取消一个词的排序值
+    * 词尾的通配符
+    "" 定义一个短语（与单个词的列表不一样，它匹配整个短语以便包含或排除这个短语）
+    >==========================<
+
+    例3: 匹配包含heavy但不包含任意以rope开始的词的行
+    SELECT prod_name, note_text
+    FROM products AS p, productnotes AS n
+    WHERE p.prod_id = n.prod_id
+      AND MATCH(note_text) AGAINST('heavy -rope*' IN BOOLEAN MODE)
+    ORDER BY n.prod_id;
+
+    例4: 一些条件示例
+    匹配包含complaint和eas*的行
+    AGAINST('+complaint +eas*' IN BOOLEAN MODE)
+    匹配包含rabbit或bait的行
+    AGAINST('rabbit bait' IN BOOLEAN MODE)
+    匹配包含*短语*"rabbit bait"的行
+    AGAINST('"rabbit bait"' IN BOOLEAN MODE)
+
+##############第19-21章############## ~数据的新建、插入与更改~
+
+    一、INSERT——插入数据
+    **插入完整的行: INSERT INTO <表名> VALUES(<完整的值>);
+    **更安全的语法: INSERT INTO <表名>(<列名>) VALUES(<值>);
+    **降低其优先级: INSERT LOW_PRIORITY INTO <表名>(<列名>) VALUES(<值>);
+    **插入多条数据: INSERT INTO <表名>(<列名>) VALUES(<值1>),(<值2>),...;
+    [注意]: 自动增量或没有值的列应使用NULL替代
+    [注意]: 指定列名的情况下将和后面的赋值按顺序对应
+    [注意]: LOW_PRIORITY也适用于UPDATE和DELETE
+
+    **插入检索数据: INSERT INTO <表名>(<列名>) SELECT <列名> FROM <另一表名>;
+    例1: 插入检索数据
+    INSERT INTO customers(cust_id,
+        cust_contact,
+        cust_email,
+        cust_name,
+        cust_address,
+        cust_city,
+        cust_state,
+        cust_zip,
+        cust_country)
+    SELECT cust_id,
+        cust_contact,
+        cust_email,
+        cust_name,
+        cust_address,
+        cust_city,
+        cust_state,
+        cust_zip,
+        cust_country
+    FROM custnew;
+    [解析]: 将custnew中的所有数据合并至customers中，注意列名实际无需对应，对应的只有数据位置
+
+    二、UPDATE——更新数据
+    [*注意*]: UPDATE一定要配合WHERE使用，否则容易更新表中的所有行，应先用SELECT进行测试
+    [语法]: UPDATE <表名> SET <列名=值>,<列名=值>,... WHERE <条件>;
+    [注意]: UPDATE IGNORE可以使得更新出现错误时不中断其他行的更新
+    [注意]: 想删除某个列的值可以设置其为NULL
+
+    三、DELETE——删除数据
+    [*注意*]: DELETE一定要配合WHERE使用，否则容易删除表中的所有行，应先用SELECT进行测试
+    [语法]: DELETE FROM <表名> WHERE <条件>;
+    [删除所有行]: TRUNCATE TABLE <表名>;
+
+    四、CREATE TABLE——创建表
+    [格式]:
+    CREATE TABLE (IF NOT EXISTS) <表名>
+    (
+        <列名> <列值的类> <列其他属性>,
+        <列名> <列值的类> <列其他属性>,
+        ... (其他列)
+        PRIMARY KEY (<列名>),  -- 定义主键所在的列
+        ... (表的其他附加属性)
+    ) ENGINE=<引擎名>;
+    [注意]: 创建新表时所创建的表必须不存在，否则将出错
+    [注意]: IF NOT EXISTS为可选选项，只检查表名是否存在
+
+    例:
+    CREATE TABLE productnotes
+    (
+        note_id    int           NOT NULL AUTO_INCREMENT,
+        prod_id    char(10)      NOT NULL,
+        note_date  datetime      NOT NULL,
+        note_text  text          NULL,
+        PRIMARY KEY(note_id),  -- 定义主键所在的列
+        FULLTEXT(note_text)  -- 也可以是多个列
+    ) ENGINE=MyISAM;
+
+    1. AUTO_INCREMENT
+    AUTO_INCREMENT是一个列属性，使得在新增值后某列可以自动增加1
+    [注意]: 通过选项AUTO_INCREMENT=<INT>可以在表创建时指定起始的值
+    [注意]: 通过ALTER TABLE <表名> AUTO_INCREMENT=<INT>; 可以在表创建后指定起始的值
+    [注意]: 通过INSERT可以不遵循该指令而自行指定值
+    [注意]: SELECT LAST_INSERT_ID() FROM <表名> LIMIT 1; 可以查询最后添加的自动增量
+
+    2. DEFAUT <值>
+    DEFAUT是一个列属性，使得在新增值后某列为一默认值
+    [注意]: MySQL不允许函数默认值，只允许常量
+
+    3. ENGINE=
+    ENGINE=<引擎名>设置了表所应用的引擎
+    **InnoDB: 事务处理引擎，不支持全文本搜索
+    **MEMORY: 功能同上，但数据存储在内存中，适合临时表
+    **MyISAM: 不支持事务处理，支持全文本搜索，性能高
+    [引擎列表]: https://dev.mysql.com/doc/refman/8.0/en/storage-engines.html
+    [注意]: 引擎可以混用，但不能使用外键操作跨引擎表查询
+
+    五、ALTER TABLE——更新表定义
+    **增加一个列: ALTER TABLE <表名> ADD <新列名>;
+    **删除一个列: ALTER TABLE <表名> DROP COLUMN <要删除的列名>;
+    **定义新外键: ALTER TABLE <表名> ADD CONSTRAINT <外键名> FOREIGN KEY <(外键列)> REFERENCES <表名> <(外键列)>;
+    [语法列表]: https://dev.mysql.com/doc/refman/8.0/en/alter-table.html
+    [注意]: 使用前最好先进行备份，因为操作无法撤销
+
+    六、DROP TABLE——删除表
+    [格式]: DROP TABLE <表名>;
+
+    七、RENAME TABLE——重命名表
+    [格式]: RENAME TABLE <旧表名> TO <新表名>,<旧表名> TO <新表名>,...;
+
+    八、创建备份
+    [格式]: CREATE TABLE <备份表名> SELECT * FROM <原始表名>;
+
+##############第22-23章############## ~视图与存储过程~
+    视图和存储过程分别将一段SQL语句和多段SQL语句进行存储以便后续调用
+
+    一、视图
+    视图是一个虚拟的SQL表，用于将一个查询进行打包并赋予一个名称以便多次调用
+    [*注意*]: 尽量只将视图用于数据检索的用途，而非更新原始表的数据
+
+    [一些注意事项]:
+    1. 视图名称唯一
+    2. 视图的创建需要对其中的原始表有足够的访问权限
+    3. 视图可以嵌套，视图中的查询可以包含视图
+    4. ORDER BY可以用在视图中，会被外层视图的ORDER BY覆盖
+    5. 视图不能索引，没有默认值
+    6. 可以和数据表进行混合SELECT检索
+
+    [语法]:
+    **创建视图: CREATE VIEW <视图名> AS <视图创建代码>;
+    **删除视图: DROP VIEW <视图名>;
+    **更新视图: CREATE OR REPLACE VIEW <视图名> AS <视图创建代码>;
+    **查看视图代码: SHOW CREATE VIEW <视图名>;
+
+    例1: 隐藏复杂的SQL代码
+    CREATE OR REPLACE VIEW productcustomers AS  -- 创建视图
+    SELECT cust_name, cust_contact, prod_id
+    FROM customers, orders, orderitems
+    WHERE customers.cust_id = orders.cust_id
+      AND orderitems.order_num = orders.order_num
+    ORDER BY prod_id;
+    SELECT * FROM productcustomers;  -- 调用创建好的视图
+    SELECT cust_name, cust_contact  -- 进行条件检索
+    FROM productcustomers
+    WHERE prod_id = 'TNT2';
+    DROP VIEW productcustomers;
+    [注意]: 视图不应有过多的限制条件，以便后期的重复调用
+
+    例2: 格式化检索出的数据
+    CREATE OR REPLACE VIEW vendorlocations AS
+    SELECT CONCAT(RTRIM(vend_name), ' (', RTRIM(vend_country), ')') AS vend_title
+    FROM vendors
+    ORDER BY vend_name;
+    SELECT * FROM vendorlocations;
+    [注意]: 一般在函数复杂的查询中使用
+
+    例3: 筛选非NULL数据
+    CREATE OR REPLACE VIEW customeremaillist AS
+    SELECT cust_id, cust_name, cust_email
+    FROM customers
+    WHERE cust_email IS NOT NULL;
+    SELECT * FROM customeremaillist;
+    DROP VIEW customeremaillist;
+
+    例4: 简化计算字段
+    CREATE OR REPLACE VIEW orderitemstotal AS
+    SELECT order_num,
+           prod_id,
+           quantity,
+           item_price,
+           quantity * item_price AS total_price
+    FROM orderitems;
+    SELECT * FROM orderitemstotal
+    WHERE order_num = 20005;
+    DROP VIEW orderitemstotal;
+
+    二、存储过程
+    **创建存储过程: CREATE PROCEDURE <过程名>(@<参数>) BEGIN <语句块> END;
+    **执行存储过程: CALL <过程名>(@<参数>);
+    **查询存储过程: SHOW CREATE PROCEDURE <过程名>;
+    **存储过程列表: SHOW PROCEDURE STATUS;
+    **删除存储过程: DROP PROCEDURE <过程名>;
+    [注意]: 创建存储过程时参数可选
+
+    例5: 创建存储过程
+    DELIMITER //  -- 临时使用'//'作为语句分隔符
+    CREATE PROCEDURE productpricing()
+    BEGIN
+        SELECT AVG(prod_price) AS priceaverage
+        FROM products;
+    END //
+    DELIMITER ;  -- 恢复默认设置
+    CALL productpricing();
+    DROP PROCEDURE productpricing;
+    [注意]: 若使用Workbench则无需临时改变分隔符
+
+    例6: 创建带参数的存储过程
+    DROP PROCEDURE productpricing;
+    DELIMITER //
+    CREATE PROCEDURE productpricing(
+        OUT pmin DECIMAL(8,2),  -- 每个参数必须有指定的类型，OUT表示输出
+        OUT pmax DECIMAL(8,2),
+        OUT pavg DECIMAL(8,2)
+    )
+    BEGIN
+        SELECT MIN(prod_price)
+        INTO pmin  -- 传入过程定义的参数
+        FROM products;
+        SELECT MAX(prod_price)
+        INTO pmax
+        FROM products;
+        SELECT AVG(prod_price)
+        INTO pavg
+        FROM products;
+    END //
+    DELIMITER ;
+    CALL productpricing(@pricelow,
+                        @pricehigh,
+                        @priceaverage);  -- 调用过程
+    SELECT @pricelow, @pricehigh, @priceaverage;  -- 检索调用的结果
+    DROP PROCEDURE productpricing;
+
+    例7: 另一个例子
+    DROP PROCEDURE ordertotal;
+    DELIMITER //
+    CREATE PROCEDURE ordertotal(
+        IN onumber INT,
+        OUT ototal DECIMAL(8,2)
+    )
+    BEGIN
+        SELECT SUM(item_price * quantity)
+        FROM orderitems
+        WHERE order_num = onumber
+        INTO ototal;
+    END //
+    DELIMITER ;
+    CALL ordertotal(20005, @total);
+    SELECT @total;
+
+    例8: 建立一个复杂过程
+    DELIMITER //
+
+    -- 名称: ordertotal
+    -- 参数: onumber, 订单号
+    --       taxable, 0 如果无税, 1 如果有税
+    --       ototal, 订单总价
+    
+    CREATE PROCEDURE ordertotal(
+        IN onumber INT,
+        IN taxable BOOLEAN,
+        OUT ototal DECIMAL(8,2)
+    ) COMMENT '获取订单总价，可选含税'
+    BEGIN
+        -- 定义两个局部变量
+        DECLARE total DECIMAL(8,2);
+        DECLARE taxrate INT DEFAULT 6;
+
+        -- 获取订单总价
+        SELECT SUM(item_price * quantity)
+        FROM orderitems
+        WHERE order_num = onumber
+        INTO total;
+
+        -- 判断是否含税
+        IF taxable THEN
+            SELECT total + (total/100*taxrate) INTO total;
+        END IF;
+
+        -- 输出至ototal
+        SELECT total INTO ototal;
+    END //
+    DELIMITER ;
+    CALL ordertotal(20005, 0, @total);
+    SELECT @total;
+    DROP PROCEDURE ordertotal;
+
+##############第24-25章############## ~游标与触发器~
+
+    一、游标
+    [契机]: 游标的引入是为了在返回SELECT检索出的列表中前进或后退几行
+    [注意]: MySQL中游标只能用于存储过程
+    **创建游标: {CREATE PROCEDURE} BEGIN DECLARE <游标名称> CURSOR FOR {SELECT FROM} END;
+    **打开游标: OPEN <游标名称>;
+    **关闭游标: CLOSE <游标名称>;
+    **检索游标: FETCH <游标名称> INTO <变量>;
+
+    例1: 一个游标的应用
+    DELIMITER //
+    CREATE PROCEDURE processorders()
+    BEGIN
+        -- 参数域
+        DECLARE done BOOLEAN DEFAULT 0;
+        DECLARE o INT;
+        DECLARE t DECIMAL(8,2);
+
+        -- 声明游标
+        DECLARE ordernumbers CURSOR
+        FOR
+        SELECT order_num FROM orders;
+
+        -- 声明一个CONTINUE HANDLER句柄
+        DECLARE CONTINUE HANDLER
+        FOR NOT FOUND
+        SET done=1;
+
+        -- 创建一个存储FETCH结果的表
+        DROP TABLE IF EXISTS ordertotals;
+        CREATE TABLE IF NOT EXISTS ordertotals
+            (order_num INT, total DECIMAL(8,2), done BOOLEAN);
+        DELETE FROM ordertotals;  -- 初始化
+
+        -- 打开游标
+        OPEN ordernumbers;
+
+        FETCH ordernumbers INTO o;  -- 获取订单号
+        WHILE NOT done DO  -- 遍历所有行，注意有个DO
+            CALL ordertotal(o, 1, t);  -- 使用上一节例8的存储过程
+                INSERT INTO ordertotals(order_num, total, done)
+                VALUES(o, t, done);
+                FETCH ordernumbers INTO o;  -- 获取订单号
+        END WHILE;  -- 终止循环
+
+        -- 关闭游标
+        CLOSE ordernumbers;
+    END //
+    DELIMITER ;
+    CALL processorders();
+    SELECT * FROM ordertotals ORDER BY order_num;
+    DROP PROCEDURE IF EXISTS processorders;
+    [注意]: NOT FOUND是一个未检索到条件，等同于SQLSTATE '02000'，http://dev.mysql.com/doc/mysql/en/error-handling.html
+    [注意]: 定义顺序为参数域、游标、句柄，否则将产生错误
+
+    二、触发器
+    [契机]: 在满足某个条件时自动执行的语句
+    [注意]: 触发器可以响应DELETE, INSERT, UPDATE三类语句，或位于BEGIN-END间的语句块
+
+    [结构]: 名称、关联的表、响应的活动、执行的时机
+    CREATE TRIGGER <触发器名>
+    BEFORE/AFTER <响应活动> ON <关联表名>
+    <具体操作>;
+    [注意]: 每个表不能有同名触发器，但最好做到每个数据库不定义同名触发器
+
+    例2: 一个触发器
+    CREATE TRIGGER newproduct AFTER INSERT ON products
+    FOR EACH ROW SELECT 'Product added' INTO @p;
+    INSERT INTO products (prod_id, vend_id, prod_name, prod_price, prod_desc)
+    VALUES('TNT3',1003,'TNT(10 sticks)',16.00,'TEST PRODUCT');
+    SELECT @p;
+    DROP TRIGGER newproduct;
+    [注释]: CREATE TRIGGER创建名为newproduct的触发器
+    [注释]: AFTER INSERT指定操作发生后执行
+    [注释]: FOR EACH ROW指定对每个插入行执行触发器，每次显示一次'Product added'
+    [注意]: 触发器内不能单独使用SELECT，但可以使用SELECT INTO
+
+    1. INSERT TRIGGER
+    在INSERT触发器中可以引用名为NEW的虚拟表，以访问插入的行，且在BEFORE下可以更新NEW
+
+    例3: 显示新订单的订单号
+    CREATE TRIGGER neworder AFTER INSERT ON orders
+    FOR EACH ROW SELECT NEW.order_num INTO @ee;
+    INSERT INTO orders(order_date,cust_id) VALUES(NOW(),10001);
+    SELECT @ee AS new_order_num;
+    DROP TRIGGER neworder;
+    [注意]: 触发器内不能单独使用SELECT，但可以使用SELECT INTO
+
+    2. DELETE TRIGGER
+    在INSERT触发器中可以引用名为OLD的虚拟表，以访问删除的行，OLD为只读，无法更新
+
+    例4: 保存被删除的行到一个存档表中
+    CREATE TABLE IF NOT EXISTS archive_orders SELECT * FROM orders;
+    DELIMITER //
+    CREATE TRIGGER deleteorder BEFORE DELETE ON orders
+    FOR EACH ROW
+    BEGIN
+        INSERT INTO archive_orders(order_num, order_date, cust_id)
+        VALUES(OLD.order_num, OLD.order_date, OLD.cust_id);
+    END //
+    DELIMITER ;
+    DROP TRIGGER deleteorder;
+    DROP TABLE archive_orders;
+    [注意]: 若存档失败则整个DELETE TRIGGER将被抛弃
+
+    3. UPDATE TRIGGER
+    在INSERT触发器中可以同时引用名为NEW和OLD的虚拟表，特性与上面的相同
+
+    例5: 自动大写
+    CREATE TRIGGER updatevendor BEFORE UPDATE ON vendors
+    FOR EACH ROW SET NEW.vend_state = UPPER(NEW.vend_state);
+    [注意]: 任何这种类型的数据清理都需要在UPDATE前运行
+
+##############第26章############## ~事务处理~
+
+    事务处理类似批处理，保证成批的MySQL操作要么完全执行，要么完全不执行，维护数据库完整性
+    [注意]: 并非所有引擎都支持数据库引擎，其中MyISAM支持、InnoDB不支持
+
+    [定义]:
+    **事务: 一组SQL语句、transaction
+    **回退: 撤销指定SQL语句、rollback
+    **提交: 将未存储的SQL语句写入数据库、commit
+    **保留点: 设置的临时占位符、savepoint
+
+    **建立事务处理: START TRANSACTION <事务处理语句>;
+
+    **新建保留点: SAVEPOINT <保留点>;
+    **回退: ROLLBACK (TO <保留点>);
+    **提交: COMMIT;
+    
+    **不自动提交: SET autocommit=0;
+
+    例1: 回退
+    SELECT * FROM ordertotals;
+    START TRANSACTION;  -- 开始一个新的事务处理
+    DELETE FROM ordertotals;
+    SELECT * FROM ordertotals;
+    ROLLBACK;  -- 回退DELETE操作
+    SELECT * FROM ordertotals;
+    [解析]: ROLLBACK回退START TRANSACTION至ROLLBACK间的所有语句
+    [注意]: 回退后事务自动关闭
+
+    例2: 提交
+    START TRANSACTION;  -- 开始一个新的事务处理
+    DELETE FROM orderitems WHERE order_num = 20010;
+    DELETE FROM orders WHERE order_num = 20010;
+    COMMIT;  -- 提交事务处理中的操作
+    [注意]: 事务处理中需要明确的提交语句
+    [注意]: 提交后事务自动关闭
+
+    例3: 保留点
+    START TRANSACTION;
+    SAVEPOINT delete1;  -- 建立一个保留点
+    DELETE FROM orders WHERE order_num = 20010;
+    ROLLBACK TO delete1;  -- 回退至指定保留点
+    [注意]: 保留点在回退或提交后自动释放，保留点越多越好
+
+##############第27章############## ~全球化与本地化~
+
+    **查看支持的字符集列表: SHOW CHARACTER SET;
+    **查看支持的校对的列表: SHOW COLLATION;
+    [注意]: 校对指对字符集中字符的排列方案，其中_cs区分大小写、_ci不区分
+
+    **使用给定校对的ORDER BY: {SELECT FROM ORDER BY} COLLATE <校对名>;
+    [注意]: 也可以用于GROUP BY、HAVING、聚集函数、别名等中
+    
+    例1: 在创建表时指定字符集和校对
+    CREATE TABLE mytable
+    (
+        column1    INT,
+        column2    VARCHAR(10)
+        column3    VARCHAR(10) CHARACTER SET latin1 COLLATE latin_1_general_ci
+    ) DEFAULT CHARACTER SET hebrew  -- 希伯来字符集ISO 8859-8 Hebrew
+      COLLATE hebrew_general_ci;  -- 希伯来不区分大小写排序，同时也是该字符集的默认排序
+    [注意]: 若仅指定DEFAULT CHARACTER SET则系统选择对应的默认校对
+    [注意]: 如column3，也可以为每个列指定独立的校对
+
+##############第28章############## ~安全管理~
+
+    安全管理赋予不同的用户对控制、访问表的特定权限，例如
+    - 多数用户只需要对表进行读写，少数需要创建和删除表的权限
+    - 读表但不能更新表的权限
+    - 添加数据但不能删除数据的权限
+    - 管理员管理用户账号的权限
+    - 只允许通过存储过程间接访问数据的权限
+    - 根据用户登录的地点限制功能
+    一般来说需要创建一系列拥有不同权限的账号实现访问控制
+
+    **获取用户列表: USE mysql; SELECT user,host FROM user;
+    **创建用户: CREATE USER <用户名> IDENTIFIED BY (PASSWORD) '<密码>';
+    **删除用户: DROP USER <用户名>;
+    **重命名用户; RENAME USER <原用户名> TO <新用户名>;
+
+    **更改密码: SET PASSWORD (FOR <用户名>) = PASSWORD('<密码>');
+
+    **查看用户权限: SHOW GRANTS FOR '<用户名>'@'<主机名>';
+    **授予用户权限: GRANT <权限名> ON <数据库名.表名> TO <用户名>;
+    **去除某项权限: REVOKE <权限名> ON <数据库名.表名> TO <用户名>;
+    [注意]:可以附加GRANT/REVOKE ALL，具体权限见文档
+
+##############第29章############## ~数据库维护~
+
+    一、备份
+    1. mysqldump
+    2. mysqlhotcpy
+    3. BACKUP TABE/SELECT INTO OUTFILE
+    [注意]: 备份前先用FLUSH TABLES;确保所有数据都写入RAM
+
+    二、数据库维护
+    1. 检查表键是否正确: ANALYZE TABLE <表名>;
+    2. 多问题检查: CHECK TABLE <表名>;
+        可附加CHANGED, EXTENDED, FAST, MEDIUM, QUICK等选项
+        有问题的表需要用REPAIR TABLE进行修复，若需要经常使用则一般会有更大的问题
+    3. 收回空间: OPTIMIZE TABLE <表名>;
+
+    三、服务器诊断
+    通过mysqld手动启动服务器
+    --help 显示帮助
+    --safe-mode 安全模式
+    --verbose 显示全文本消息
+    --version 版本信息
+
+    四、查看日志
+    1. 错误日志: data/hostname.err --log-error
+    2. 查询日志: data/hostname.log --log
+    3. 二进制日志: data/hostname.bin --log-bin
+    4. 缓慢查询日志: data/hostname-slow.log --log-slow-queries
+    [注意]: 使用日志时可以用FLUSH LOGS刷新和重新开始所有日志文件
+
+##############第30章############## ~改善性能~
+
+    首先，MySQL（与所有DBMS一样）具有特定的硬件建议。在学
+    习和研究MySQL时，使用任何旧的计算机作为服务器都可以。但
+    对用于生产的服务器来说，应该坚持遵循这些硬件建议。
+
+    一般来说，关键的生产DBMS应该运行在自己的专用服务器上。
+
+    MySQL是用一系列的默认设置预先配置的，从这些设置开始通常
+    是很好的。但过一段时间后你可能需要调整内存分配、缓冲区大
+    小等。（为查看当前设置，可使用SHOW VARIABLES;和SHOW
+    STATUS;。）
+
+    MySQL一个多用户多线程的DBMS，换言之，它经常同时执行多
+    个任务。如果这些任务中的某一个执行缓慢，则所有请求都会执
+    行缓慢。如果你遇到显著的性能不良，可使用SHOW PROCESSLIST
+    显示所有活动进程（以及它们的线程ID和执行时间）。你还可以用
+    KILL命令终结某个特定的进程（使用这个命令需要作为管理员登
+    录）。
+    
+    总是有不止一种方法编写同一条SELECT语句。应该试验联结、并、
+    子查询等，找出最佳的方法。
+    
+    使用EXPLAIN语句让MySQL解释它将如何执行一条SELECT语句。
+    
+    一般来说，存储过程执行得比一条一条地执行其中的各条MySQL
+    语句快。
+    
+    应该总是使用正确的数据类型。
+    
+    决不要检索比需求还要多的数据。换言之，不要用SELECT *（除
+    非你真正需要每个列）。
+    
+    有的操作（包括INSERT）支持一个可选的DELAYED关键字，如果
+    使用它，将把控制立即返回给调用程序，并且一旦有可能就实际
+    执行该操作。
+    
+    在导入数据时，应该关闭自动提交。你可能还想删除索引（包括
+    FULLTEXT索引），然后在导入完成后再重建它们。
+    
+    必须索引数据库表以改善数据检索的性能。确定索引什么不是一
+    件微不足道的任务，需要分析使用的SELECT语句以找出重复的
+    WHERE和ORDER BY子句。如果一个简单的WHERE子句返回结果所花
+    的时间太长，则可以断定其中使用的列（或几个列）就是需要索
+    引的对象。
+    
+    你的SELECT语句中有一系列复杂的OR条件吗？通过使用多条
+    SELECT语句和连接它们的UNION语句，你能看到极大的性能改
+    进。
+   
+    索引改善数据检索的性能，但损害数据插入、删除和更新的性能。
+    如果你有一些表，它们收集数据且不经常被搜索，则在有必要之
+    前不要索引它们。（索引可根据需要添加和删除。）
+    
+    LIKE很慢。一般来说，最好是使用FULLTEXT而不是LIKE。
+    
+    数据库是不断变化的实体。一组优化良好的表一会儿后可能就面
+    目全非了。由于表的使用和内容的更改，理想的优化和配置也会
+    改变。
+    
+    最重要的规则就是，每条规则在某些条件下都会被打破。
